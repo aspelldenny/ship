@@ -1,7 +1,10 @@
 mod canary;
 mod config;
+mod deploy;
 mod detect;
 mod error;
+mod learn;
+mod mcp;
 mod output;
 mod pipeline;
 
@@ -77,11 +80,54 @@ enum Commands {
         #[arg(long, default_value = "30")]
         timeout: u64,
     },
-    // Phase 3
-    // /// Manage cross-project learnings
-    // Learn { ... },
-    // /// Start MCP server
-    // Serve,
+    /// Deploy to production
+    Deploy {
+        /// Override deploy provider
+        #[arg(long)]
+        provider: Option<String>,
+        /// Override SSH target
+        #[arg(long)]
+        ssh: Option<String>,
+        /// Override deploy command
+        #[arg(long)]
+        command: Option<String>,
+        /// Skip post-deploy canary check
+        #[arg(long)]
+        skip_canary: bool,
+    },
+
+    /// Manage cross-project learnings
+    Learn {
+        #[command(subcommand)]
+        action: LearnAction,
+    },
+    /// Start MCP server for Claude integration
+    Serve,
+}
+
+#[derive(Subcommand)]
+enum LearnAction {
+    /// Add a new learning
+    Add {
+        /// The learning message
+        message: String,
+        /// Tags for categorization
+        #[arg(long, short, value_delimiter = ',')]
+        tags: Vec<String>,
+    },
+    /// Search learnings by keyword
+    Search {
+        /// Search query
+        query: String,
+    },
+    /// List recent learnings
+    List {
+        /// Number of recent items to show
+        #[arg(long, short, default_value = "10")]
+        recent: usize,
+    },
+    /// Remove duplicate learnings
+    Prune,
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -191,6 +237,95 @@ async fn main() {
                     eprintln!("❌ Canary error: {e}");
                     1
                 }
+            }
+        }
+
+        Some(Commands::Deploy {
+            provider,
+            ssh,
+            command,
+            skip_canary,
+        }) => {
+            let mut deploy_config = config.deploy.clone();
+            if let Some(p) = provider {
+                deploy_config.provider = p;
+            }
+            if let Some(s) = ssh {
+                deploy_config.ssh = Some(s);
+            }
+            if let Some(c) = command {
+                deploy_config.command = Some(c);
+            }
+
+            let canary_config = if skip_canary {
+                crate::config::CanaryConfig {
+                    checks: vec![],
+                    ..config.canary.clone()
+                }
+            } else {
+                config.canary.clone()
+            };
+
+            match deploy::run(&deploy_config, &canary_config).await {
+                Ok(result) => {
+                    if result.success {
+                        0
+                    } else {
+                        1
+                    }
+                }
+                Err(e) => {
+                    eprintln!("❌ Deploy error: {e}");
+                    1
+                }
+            }
+        }
+
+        Some(Commands::Serve) => match mcp::server::serve(config).await {
+            Ok(_) => 0,
+            Err(e) => {
+                eprintln!("❌ MCP server error: {e}");
+                1
+            }
+        },
+
+        Some(Commands::Learn { action }) => {
+            let project = config.project_name();
+            match action {
+                LearnAction::Add { message, tags } => {
+                    match learn::add(&config.learn, &project, &message, &tags) {
+                        Ok(_) => 0,
+                        Err(e) => {
+                            eprintln!("❌ Learn error: {e}");
+                            1
+                        }
+                    }
+                }
+                LearnAction::Search { query } => {
+                    match learn::search(&config.learn, &project, &query) {
+                        Ok(_) => 0,
+                        Err(e) => {
+                            eprintln!("❌ Learn error: {e}");
+                            1
+                        }
+                    }
+                }
+                LearnAction::List { recent } => {
+                    match learn::list(&config.learn, &project, recent) {
+                        Ok(_) => 0,
+                        Err(e) => {
+                            eprintln!("❌ Learn error: {e}");
+                            1
+                        }
+                    }
+                }
+                LearnAction::Prune => match learn::prune(&config.learn, &project) {
+                    Ok(_) => 0,
+                    Err(e) => {
+                        eprintln!("❌ Learn error: {e}");
+                        1
+                    }
+                },
             }
         }
     };

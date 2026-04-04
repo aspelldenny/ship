@@ -15,6 +15,7 @@ pub struct Config {
     pub changelog: ChangelogConfig,
     pub pr: PrConfig,
     pub canary: CanaryConfig,
+    pub deploy: DeployConfig,
     pub learn: LearnConfig,
 }
 
@@ -74,6 +75,15 @@ pub struct CanaryConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
+pub struct DeployConfig {
+    pub provider: String,
+    pub command: Option<String>,
+    pub ssh: Option<String>,
+    pub maintenance_mode: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct LearnConfig {
     pub dir: String,
     pub project_dir: String,
@@ -93,6 +103,7 @@ impl Default for Config {
             changelog: ChangelogConfig::default(),
             pr: PrConfig::default(),
             canary: CanaryConfig::default(),
+            deploy: DeployConfig::default(),
             learn: LearnConfig::default(),
         }
     }
@@ -162,6 +173,17 @@ impl Default for CanaryConfig {
             ssh: None,
             timeout_secs: 30,
             checks: vec!["http".into()],
+        }
+    }
+}
+
+impl Default for DeployConfig {
+    fn default() -> Self {
+        Self {
+            provider: "github-actions".into(),
+            command: None,
+            ssh: None,
+            maintenance_mode: false,
         }
     }
 }
