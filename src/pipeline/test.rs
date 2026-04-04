@@ -38,12 +38,7 @@ pub fn run(config: &Config) -> Result<StepResult> {
             // Take last 5 lines of stderr for context
             stderr.lines().rev().take(5).collect::<Vec<_>>().join("\n")
         } else {
-            stdout
-                .lines()
-                .rev()
-                .take(5)
-                .collect::<Vec<_>>()
-                .join("\n")
+            stdout.lines().rev().take(5).collect::<Vec<_>>().join("\n")
         };
 
         Ok(StepResult {

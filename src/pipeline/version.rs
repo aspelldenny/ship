@@ -55,11 +55,7 @@ fn resolve_version_file(config: &Config) -> Option<String> {
 
 fn auto_detect_bump(config: &Config) -> Result<String> {
     let output = Command::new("git")
-        .args([
-            "diff",
-            "--stat",
-            &format!("{}...HEAD", config.base_branch),
-        ])
+        .args(["diff", "--stat", &format!("{}...HEAD", config.base_branch)])
         .output()?;
 
     let stat = String::from_utf8_lossy(&output.stdout);
@@ -80,20 +76,15 @@ fn auto_detect_bump(config: &Config) -> Result<String> {
     let thresholds = &config.version.auto_thresholds;
     let bump = if total_lines < thresholds.patch {
         "patch"
-    } else if total_lines < thresholds.minor {
-        "minor"
     } else {
-        "minor" // > 500 lines, could be major but default to minor
+        "minor"
     };
 
     Ok(bump.into())
 }
 
 fn bump_version(current: &str, bump: &str) -> String {
-    let parts: Vec<u32> = current
-        .split('.')
-        .filter_map(|p| p.parse().ok())
-        .collect();
+    let parts: Vec<u32> = current.split('.').filter_map(|p| p.parse().ok()).collect();
 
     let (major, minor, patch) = match parts.as_slice() {
         [ma, mi, pa, ..] => (*ma, *mi, *pa),

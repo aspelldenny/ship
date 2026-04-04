@@ -28,10 +28,10 @@ impl ProjectStack {
         }
 
         if root.join("requirements.txt").exists() {
-            if let Ok(content) = std::fs::read_to_string(root.join("requirements.txt")) {
-                if content.to_lowercase().contains("flask") {
-                    return Self::Flask;
-                }
+            if let Ok(content) = std::fs::read_to_string(root.join("requirements.txt"))
+                && content.to_lowercase().contains("flask")
+            {
+                return Self::Flask;
             }
             return Self::Python;
         }
@@ -97,14 +97,22 @@ mod tests {
     #[test]
     fn test_detect_flask() {
         let dir = TempDir::new().unwrap();
-        std::fs::write(dir.path().join("requirements.txt"), "flask==3.0\nsqlalchemy").unwrap();
+        std::fs::write(
+            dir.path().join("requirements.txt"),
+            "flask==3.0\nsqlalchemy",
+        )
+        .unwrap();
         assert_eq!(ProjectStack::detect(dir.path()), ProjectStack::Flask);
     }
 
     #[test]
     fn test_detect_python() {
         let dir = TempDir::new().unwrap();
-        std::fs::write(dir.path().join("pyproject.toml"), "[project]\nname = \"test\"").unwrap();
+        std::fs::write(
+            dir.path().join("pyproject.toml"),
+            "[project]\nname = \"test\"",
+        )
+        .unwrap();
         assert_eq!(ProjectStack::detect(dir.path()), ProjectStack::Python);
     }
 

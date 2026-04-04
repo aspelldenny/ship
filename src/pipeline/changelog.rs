@@ -47,7 +47,7 @@ fn get_branch_commits(base: &str) -> Result<Vec<CommitInfo>> {
     let commits = stdout
         .lines()
         .filter(|l| !l.is_empty())
-        .map(|line| parse_commit(line))
+        .map(parse_commit)
         .collect();
 
     Ok(commits)

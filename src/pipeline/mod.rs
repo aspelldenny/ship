@@ -1,8 +1,8 @@
 pub mod changelog;
 pub mod commit;
 pub mod docs_gate;
-pub mod preflight;
 pub mod pr;
+pub mod preflight;
 pub mod push;
 pub mod test;
 pub mod version;

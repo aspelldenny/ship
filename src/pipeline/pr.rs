@@ -65,9 +65,7 @@ pub fn run(config: &Config, steps: &[StepResult]) -> Result<StepResult> {
         args.push(label.clone());
     }
 
-    let output = Command::new("gh")
-        .args(&args)
-        .output()?;
+    let output = Command::new("gh").args(&args).output()?;
 
     if output.status.success() {
         let url = String::from_utf8_lossy(&output.stdout).trim().to_string();

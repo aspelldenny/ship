@@ -60,7 +60,6 @@ enum Commands {
 
     /// Auto-detect project and generate .ship.toml
     Init,
-
     // Phase 2
     // /// Post-deploy health check
     // Canary { ... },
@@ -138,15 +137,13 @@ fn main() {
             }
         }
 
-        Some(Commands::Init) => {
-            match init_project() {
-                Ok(_) => 0,
-                Err(e) => {
-                    eprintln!("❌ Init error: {e}");
-                    1
-                }
+        Some(Commands::Init) => match init_project() {
+            Ok(_) => 0,
+            Err(e) => {
+                eprintln!("❌ Init error: {e}");
+                1
             }
-        }
+        },
     };
 
     process::exit(exit_code);
