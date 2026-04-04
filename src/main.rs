@@ -1,3 +1,4 @@
+mod canary;
 mod config;
 mod detect;
 mod error;
@@ -60,10 +61,22 @@ enum Commands {
 
     /// Auto-detect project and generate .ship.toml
     Init,
-    // Phase 2
-    // /// Post-deploy health check
-    // Canary { ... },
 
+    /// Post-deploy health check
+    Canary {
+        /// Health check URL (overrides config)
+        #[arg(long)]
+        url: Option<String>,
+        /// Docker container name (overrides config)
+        #[arg(long)]
+        docker: Option<String>,
+        /// SSH target for Docker check (overrides config)
+        #[arg(long)]
+        ssh: Option<String>,
+        /// Health check timeout in seconds
+        #[arg(long, default_value = "30")]
+        timeout: u64,
+    },
     // Phase 3
     // /// Manage cross-project learnings
     // Learn { ... },
@@ -71,7 +84,8 @@ enum Commands {
     // Serve,
 }
 
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     let cli = Cli::parse();
 
     let config = match Config::load(cli.config.as_deref()) {
@@ -144,6 +158,41 @@ fn main() {
                 1
             }
         },
+
+        Some(Commands::Canary {
+            url,
+            docker,
+            ssh,
+            timeout,
+        }) => {
+            let mut canary_config = config.canary.clone();
+
+            // CLI args override config
+            if let Some(u) = url {
+                canary_config.url = Some(u);
+            }
+            if let Some(d) = docker {
+                canary_config.docker_container = Some(d);
+            }
+            if let Some(s) = ssh {
+                canary_config.ssh = Some(s);
+            }
+            canary_config.timeout_secs = timeout;
+
+            match canary::run(&canary_config).await {
+                Ok(result) => {
+                    if result.all_healthy() {
+                        0
+                    } else {
+                        1
+                    }
+                }
+                Err(e) => {
+                    eprintln!("❌ Canary error: {e}");
+                    1
+                }
+            }
+        }
     };
 
     process::exit(exit_code);

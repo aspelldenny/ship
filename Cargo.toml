@@ -27,8 +27,8 @@ regex = "1"
 # Async (MCP server, watch mode)
 tokio = { version = "1", features = ["macros", "rt", "signal", "time"] }
 
-# HTTP (canary health checks — Phase 2)
-# reqwest = { version = "0.12", features = ["json"] }
+# HTTP (canary health checks)
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 
 # MCP server
 rmcp = { version = "0.8", features = ["server", "transport-io"] }
