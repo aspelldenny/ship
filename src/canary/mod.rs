@@ -1,3 +1,4 @@
+pub mod command;
 pub mod docker;
 pub mod http;
 
@@ -84,6 +85,13 @@ pub async fn run(config: &CanaryConfig) -> Result<CanaryResult> {
             },
         };
 
+        print_check(&result);
+        checks.push(result);
+    }
+
+    // Run custom command checks
+    for custom in &config.commands {
+        let result = command::check(custom, config.ssh.as_deref());
         print_check(&result);
         checks.push(result);
     }

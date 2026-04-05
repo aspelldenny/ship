@@ -71,6 +71,13 @@ pub struct CanaryConfig {
     pub ssh: Option<String>,
     pub timeout_secs: u64,
     pub checks: Vec<String>,
+    pub commands: Vec<CustomCheckConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CustomCheckConfig {
+    pub name: String,
+    pub command: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -173,6 +180,7 @@ impl Default for CanaryConfig {
             ssh: None,
             timeout_secs: 30,
             checks: vec!["http".into()],
+            commands: vec![],
         }
     }
 }
