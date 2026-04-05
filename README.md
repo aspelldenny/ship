@@ -16,6 +16,20 @@ $ ship
   PR ............... #42 created
 ```
 
+## Status
+
+Ship is at **v0.2.0** — functional but early. The core pipeline (`ship`, `ship check`, `ship init`) is battle-tested. Canary, deploy, learn, and MCP server are implemented and passing tests but have not been dogfooded on real projects yet. Expect rough edges.
+
+| Feature | Status |
+|---------|--------|
+| `ship` (full pipeline) | Stable |
+| `ship check` | Stable |
+| `ship init` | Stable |
+| `ship canary` | Implemented, needs real-world testing |
+| `ship deploy` | Implemented, needs real-world testing |
+| `ship learn` | Implemented, needs real-world testing |
+| `ship serve` (MCP) | Implemented, needs real-world testing |
+
 ## Install
 
 ```bash

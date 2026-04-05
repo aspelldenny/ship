@@ -105,10 +105,11 @@ gh pr create --title "feat: ..." --body "..."
 
 ## Phase History
 
-- Phase 1: MVP Ship Pipeline ← CURRENT
-- Phase 2: Canary + Deploy (planned)
-- Phase 3: Intelligence — AI review, learnings, MCP (planned)
-- Phase 4: Ecosystem — Skill, GitHub Actions, Telegram (planned)
+- Phase 1: MVP Ship Pipeline (done)
+- Phase 2: Canary + Deploy (done — code complete, needs dogfooding)
+- Phase 3: Intelligence — learnings, MCP server (done — code complete, needs dogfooding)
+- Phase 4: Ecosystem — AI review, Skill registration, GitHub Actions, Telegram (planned)
+- Current focus: dogfooding on real projects (tarot, jarvis, media-rating)
 
 ## Gotchas
 
