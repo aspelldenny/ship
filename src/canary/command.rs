@@ -68,9 +68,7 @@ fn run_via_ssh(ssh: &str, cmd: &str) -> std::result::Result<String, String> {
 
     ssh_cmd.arg(&ssh_target).arg(cmd);
 
-    let output = ssh_cmd
-        .output()
-        .map_err(|e| format!("ssh failed: {e}"))?;
+    let output = ssh_cmd.output().map_err(|e| format!("ssh failed: {e}"))?;
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
