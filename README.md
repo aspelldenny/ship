@@ -1,43 +1,177 @@
 # Ship
 
-Automated release workflow — test, commit, push, PR in one command.
+**One command to rule the release.**
+
+Ship automates the tedious release cycle — run tests, bump version, update changelog, commit, push, open PR — so you can focus on building. Built in Rust for speed and reliability.
+
+```
+$ ship
+  Preflight ........ ok
+  Test ............. ok (cargo test, 2.1s)
+  Docs-gate ........ ok
+  Version .......... 0.2.0 → 0.2.1
+  Changelog ........ updated
+  Commit ........... feat: add retry logic
+  Push ............. origin/feat/retry
+  PR ............... #42 created
+```
 
 ## Install
 
 ```bash
+cargo install --git https://github.com/aspelldenny/ship
+```
+
+Or build from source:
+
+```bash
+git clone https://github.com/aspelldenny/ship
+cd ship
 cargo install --path .
 ```
 
-## Usage
+## Commands
 
-```bash
-ship              # Full pipeline: test → docs-gate → version → changelog → commit → push → PR
-ship check        # Pre-flight only (test + docs-gate, no commit)
-ship init         # Auto-detect project, generate .ship.toml
-ship --dry-run    # Simulate without side effects
+| Command | What it does |
+|---------|-------------|
+| `ship` | Full pipeline: test → docs-gate → version → changelog → commit → push → PR |
+| `ship check` | Pre-flight only — run tests + docs-gate, no commit |
+| `ship init` | Auto-detect your stack, generate `.ship.toml` |
+| `ship deploy` | Deploy to production (SSH, GitHub Actions, Render, Cargo, custom) |
+| `ship canary` | Post-deploy health check (HTTP + Docker via SSH) |
+| `ship learn` | Cross-project learnings — add, search, list, prune |
+| `ship serve` | MCP server for Claude Code integration |
+
+## Flags
+
+```
+--dry-run          Simulate without side effects
+--skip-tests       Skip the test step
+--skip-docs-gate   Skip docs-gate validation
+--bump <level>     Force patch / minor / major
+--no-pr            Commit + push only, skip PR creation
+--config <path>    Custom config file
+-v, --verbose      Verbose output
 ```
 
 ## Configuration
 
-Create `.ship.toml` in your project root (or run `ship init`):
+Run `ship init` to auto-detect your project and generate a config:
+
+```bash
+$ ship init
+  Detected: Rust (Cargo.toml)
+  Created: .ship.toml
+```
+
+Or create `.ship.toml` manually:
 
 ```toml
 name = "my-project"
 base_branch = "main"
 
 [test]
-command = "pnpm test --run"
+command = "cargo test"
 
 [docs_gate]
 enabled = true
 blocking = false
+
+[deploy]
+provider = "ssh"                    # ssh | github-actions | render | cargo | custom
+ssh = "user@prod.example.com"
+command = "cd /app && docker compose up -d"
+
+[deploy.maintenance_mode]
+on = "sudo systemctl start maintenance"
+off = "sudo systemctl stop maintenance"
+```
+
+### Stack auto-detection
+
+| Stack | Detected by | Default test command |
+|-------|------------|---------------------|
+| Rust | `Cargo.toml` | `cargo test` |
+| Next.js | `next.config.*` | `pnpm test --run` |
+| Flask | `requirements.txt` with flask | `python -m pytest tests/ -x` |
+| Python | `pyproject.toml` | `python -m pytest` |
+| Node.js | `package.json` | `npm test` |
+
+## Deploy providers
+
+**SSH** — Run commands on a remote server via SSH:
+```bash
+ship deploy --provider ssh --ssh user@host
+```
+
+**GitHub Actions** — Verify the latest workflow run passed:
+```bash
+ship deploy --provider github-actions
+```
+
+**Render** — Auto-deploys on push, canary verifies health:
+```bash
+ship deploy --provider render
+```
+
+**Cargo** — Publish to crates.io:
+```bash
+ship deploy --provider cargo
+```
+
+**Custom** — Run any command:
+```bash
+ship deploy --provider custom --command "./deploy.sh"
+```
+
+All providers support `--skip-canary` and optional post-deploy health checks.
+
+## MCP server
+
+Ship exposes an [MCP](https://modelcontextprotocol.io) server for AI-assisted workflows:
+
+```bash
+ship serve
+```
+
+Available tools:
+
+| Tool | Description |
+|------|-------------|
+| `ship_check` | Run pre-flight checks |
+| `ship_canary` | Health check deployed app |
+| `ship_learn_add` | Record a learning |
+| `ship_learn_search` | Search learnings |
+
+Add to your Claude Code MCP config:
+
+```json
+{
+  "mcpServers": {
+    "ship": {
+      "command": "ship",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+## Learnings
+
+Ship maintains a cross-project knowledge base in JSONL format:
+
+```bash
+ship learn add "Always run migrations before deploy" -t deploy,database
+ship learn search "migration"
+ship learn list --recent 5
+ship learn prune
 ```
 
 ## Requirements
 
-- [gh CLI](https://cli.github.com) for PR creation
-- [docs-gate](https://github.com/aspelldenny/docs-gate) (optional)
+- [gh CLI](https://cli.github.com) — for PR creation and GitHub Actions deploy
+- [docs-gate](https://github.com/aspelldenny/docs-gate) — optional, validates docs are up-to-date
 
 ## License
 
-MIT
+[MIT](LICENSE)
