@@ -32,6 +32,36 @@ Sếp đọc file này TRƯỚC KHI viết phiếu tiếp theo để cập nhậ
 
 ---
 
+## P002 — 2026-04-24 — ship note Obsidian integration (phiếu drafted)
+
+> **Lưu ý:** P002 hôm nay mới là DRAFTING phiếu (type=docs, migration từ vault). Implementation CHƯA chạy. Discovery cho phần implementation sẽ append vào entry này khi thợ pickup.
+
+### Assumptions trong phiếu — ĐÚNG (verified khi migrate):
+- `src/main.rs` dùng clap `#[derive(Subcommand)] enum Commands` (dòng 11, 55-56) — ✅ phiếu gốc đoán đúng.
+- 4 MCP tools hiện tại: ship_check, ship_canary, ship_learn_add, ship_learn_search (`src/mcp/server.rs` dòng 37, 79, 114, 125) — ✅.
+- Config pattern nested sub-struct + `#[serde(default)]` (TestConfig, DocsGateConfig, ...) — ✅.
+- Module layout: feature = dir với `mod.rs` (ví dụ `canary/mod.rs` export `pub async fn run` dòng 48) — ✅, sẽ follow cho `src/note/`.
+- `chrono` 0.4 có sẵn với feature `serde` — ✅ dùng cho date format.
+- Vault `~/VibeNotes/10_Projects/ship/` có README.md + tickets/ (logs/ chưa tồn tại, sẽ tạo khi write đầu tiên) — ✅.
+- obsidian-git plugin enabled — ✅ (race mitigation bằng atomic write là đủ).
+
+### Assumptions trong phiếu — SAI so với code thật:
+- Phiếu gốc vault nói "src/commands/note.rs (mới)" — **SAI**: ship không có folder `src/commands/`. Pattern thật là `src/<feature>/mod.rs` (giống `src/canary/mod.rs`). → Phiếu mới P002 đã sửa thành `src/note/mod.rs`.
+- Phiếu gốc vault nói "src/mcp/" chung chung — thực tế có 3 files rõ: `mod.rs`, `server.rs`, `tools.rs`. → Phiếu mới chỉ định: params ở `tools.rs`, tool method ở `server.rs`.
+- Phiếu gốc nói post-success hook ở "`src/commands/check.rs`" — **SAI**: hook có thể ở `src/pipeline/mod.rs` (vì pipeline là nơi check chạy). → Phiếu mới ghi "thợ xác định đúng file" và suggest `src/pipeline/mod.rs`.
+
+### Edge cases phát hiện thêm:
+- `dirs` crate version cần pre-approve ("5") — nếu conflict với existing deps (serde/tokio/reqwest) → Hard Stop cho thợ.
+- File format "Learnings" section: phiếu gốc in "N/A" nếu không có `--message`. Em refactor → BỎ section hoàn toàn (tránh rác visual trong vault). Small UX improvement.
+- Test helper cho vault: nên dùng `tempfile::TempDir` (ship đã dùng pattern này — gotcha #4 CLAUDE.md).
+- Counter `test_tool_router_has_4_tools` → phải update thành `_has_5_tools` — regression test cần touch.
+
+### Docs đã cập nhật theo discoveries:
+- Phiếu gốc trong vault (`~/VibeNotes/10_Projects/ship/tickets/SHIP-NOTE-OBSIDIAN-INTEGRATION.md`) CHƯA sửa — Sếp decide: archive hay giữ làm lịch sử (em note trong P002 phiếu mới, section "Nguồn gốc").
+- CLAUDE.md + ARCHITECTURE.md CHƯA update (sẽ làm khi thợ implement — không phải scope drafting).
+
+---
+
 ## P001 — 2026-04-24 — Phiếu standard + docs discipline
 
 ### Assumptions trong phiếu — ĐÚNG:
