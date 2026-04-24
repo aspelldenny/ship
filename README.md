@@ -28,6 +28,7 @@ Ship is at **v0.2.0** — functional but early. The core pipeline (`ship`, `ship
 | `ship canary` | Implemented, needs real-world testing |
 | `ship deploy` | Implemented, needs real-world testing |
 | `ship learn` | Implemented, needs real-world testing |
+| `ship note` | Implemented, needs real-world testing |
 | `ship serve` (MCP) | Implemented, needs real-world testing |
 
 ## Install
@@ -54,6 +55,7 @@ cargo install --path .
 | `ship deploy` | Deploy to production (SSH, GitHub Actions, Render, Cargo, custom) |
 | `ship canary` | Post-deploy health check (HTTP + Docker via SSH) |
 | `ship learn` | Cross-project learnings — add, search, list, prune |
+| `ship note` | Export a per-phiếu log into an Obsidian vault |
 | `ship serve` | MCP server for Claude Code integration |
 
 ## Flags
@@ -156,6 +158,7 @@ Available tools:
 | `ship_canary` | Health check deployed app |
 | `ship_learn_add` | Record a learning |
 | `ship_learn_search` | Search learnings |
+| `ship_note_export` | Write a per-phiếu log to the Obsidian vault |
 
 Add to your Claude Code MCP config:
 
@@ -180,6 +183,24 @@ ship learn search "migration"
 ship learn list --recent 5
 ship learn prune
 ```
+
+## Obsidian vault log (`ship note`)
+
+Export a per-phiếu markdown log to an Obsidian vault under `10_Projects/<slug>/logs/`. The note captures the latest commit subject + body, `git diff --stat`, branch, commit URL, and (if available) the open PR URL.
+
+```bash
+# One-off: log current commit into vault
+ship note --project tarot --ticket P042 --message "refactored credit check"
+
+# Configure per-project for auto-logging on successful `ship check`:
+# .ship.toml
+# [obsidian]
+# auto_log    = true
+# vault_path  = "~/VibeNotes"      # optional, overrides OBSIDIAN_VAULT_PATH + default
+# project_slug = "tarot"           # optional, overrides cwd dirname
+```
+
+Vault missing or write failure → warning on stderr, exit 0. Never fails `ship`. Writes are atomic (`tmp + rename`), safe under an `obsidian-git` auto-commit plugin.
 
 ## Requirements
 

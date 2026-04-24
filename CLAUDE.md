@@ -186,8 +186,24 @@ Khi Sếp KHÔNG gõ `phieu <slug>` từ đầu mà chat với em để bàn ra 
 - Phase 1: MVP Ship Pipeline (done)
 - Phase 2: Canary + Deploy (done — code complete, needs dogfooding)
 - Phase 3: Intelligence — learnings, MCP server (done — code complete, needs dogfooding)
+- Phase 3.5: Obsidian vault log — `ship note` + `[obsidian] auto_log` hook + `ship_note_export` MCP tool (P003, done — needs dogfooding)
 - Phase 4: Ecosystem — AI review, Skill registration, GitHub Actions, Telegram (planned)
 - Current focus: dogfooding on real projects (tarot, jarvis, media-rating)
+
+## ship note — Obsidian vault log
+
+`ship note` exports a per-phiếu markdown log to `<vault>/10_Projects/<slug>/logs/`. Source: `src/note/mod.rs`. Integration points:
+
+- **Manual:** `ship note --project <slug> [--ticket <id>] [--message <text>] [--vault-path <path>]`. Prints written path on stdout.
+- **Auto-log hook:** Set `.ship.toml [obsidian] auto_log = true`. After a successful `ship check`, a note is written. Opt-in default off.
+- **MCP:** `ship_note_export` tool (params: `project_slug`, `ticket_id`, `message`, `vault_path`). Independent from `ship_check` — MCP callers must invoke explicitly.
+- **Vault resolution priority:** CLI arg > `OBSIDIAN_VAULT_PATH` env > `.ship.toml [obsidian] vault_path` > `~/VibeNotes`.
+
+**Design constraints:**
+- Graceful: vault missing / write fail → warning on stderr, exit 0. Never fails ship.
+- Atomic write (`tmp + rename`) — safe under `obsidian-git` auto-commit.
+- Zero new deps — Vietnamese diacritic stripping via manual table in `src/note/mod.rs`; `~` expansion via local `shellexpand_with_home()` (mirrors `src/learn/mod.rs` pattern). Non-Vietnamese non-ASCII scripts fall through as `-` in slugify.
+- Hook is CLI-level only — MCP `ship_check` does NOT auto-log (avoids surprise vault writes from AI agents).
 
 ## Gotchas
 

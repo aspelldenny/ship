@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added (P003 — 2026-04-24, feat)
+- `ship note` — new CLI subcommand that writes a per-phiếu markdown log to `<vault>/10_Projects/<slug>/logs/<YYYY-MM-DD>-<slug>.md`. Content: commit subject/body, `git diff --stat`, learnings (if `--message`), commit URL (if GitHub remote), PR URL (if `gh` available + open PR), current branch. Atomic write.
+- `[obsidian]` config section in `.ship.toml` with `auto_log`, `vault_path`, `project_slug` (all optional; `auto_log = false` default).
+- Post-success hook in `ship check`: if `auto_log = true` and check passes → writes vault note. Graceful (never fails ship).
+- MCP tool `ship_note_export` — params `project_slug`, `ticket_id`, `message`, `vault_path`. Tool count now 5 (was 4).
+- `src/note/` module — zero-dep implementation: Vietnamese diacritic stripping via manual table, `shellexpand_with_home()` for `~` (mirrors `src/learn/mod.rs`), `SystemTime` nanos for 4-char hex collision suffix.
+- 16 new unit tests covering slugify, kebab-case, diacritic stripping, vault resolution priority, atomic write, filename collision, graceful skip paths. Total now 54 tests (was 38).
+
 ### Drafted (P002 — 2026-04-24, docs)
 - `docs/ticket/P002-obsidian-note.md` — migration phiếu từ `~/VibeNotes/10_Projects/ship/tickets/SHIP-NOTE-OBSIDIAN-INTEGRATION.md` (vault draft) sang format TICKET_TEMPLATE mới. Nội dung: feature `ship note` subcommand — tự log phiếu hoàn thành vào Obsidian vault. 7 tasks, 11 Verification Anchors có grep results thật, 4 open questions chờ Sếp decide. Implementation CHƯA bắt đầu.
 
