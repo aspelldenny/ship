@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added (P004 — 2026-04-24, chore)
+- `.mcp.json` at ship repo root — registers ship + docs-gate + filesystem MCP servers for Claude Code sessions opened in `~/ship`.
+- `.ship.toml` at ship repo root — ship self-dogfood with `[obsidian] auto_log = true`. `ship check` now auto-logs to `~/VibeNotes/10_Projects/ship/logs/`.
+- `SKILL.md` — new "Step 5: Log to Obsidian vault" section with CLI + MCP usage and a decision tree for when to log. Prerequisites now mention the vault. Integration section references the auto-log hook + MCP tool.
+- Reinstalled `~/.cargo/bin/ship` via `cargo install --path . --force` — both CLI `ship note` and MCP `ship_note_export` tool are now live system-wide (pending Claude Code restart to pick up the new MCP binary).
+
 ### Added (P003 — 2026-04-24, feat)
 - `ship note` — new CLI subcommand that writes a per-phiếu markdown log to `<vault>/10_Projects/<slug>/logs/<YYYY-MM-DD>-<slug>.md`. Content: commit subject/body, `git diff --stat`, learnings (if `--message`), commit URL (if GitHub remote), PR URL (if `gh` available + open PR), current branch. Atomic write.
 - `[obsidian]` config section in `.ship.toml` with `auto_log`, `vault_path`, `project_slug` (all optional; `auto_log = false` default).

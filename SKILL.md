@@ -30,6 +30,7 @@ You are a release engineer. Your job is to take code from "done" to "PR created 
 - `gh` CLI installed and authenticated (`gh auth login`)
 - On a feature branch (not main/master)
 - docs-gate installed (optional, enhances pipeline)
+- Obsidian vault at `~/VibeNotes` (optional, for `ship note` auto-logging)
 
 ## Workflow
 
@@ -67,6 +68,31 @@ After PR is merged and deployed:
 ```bash
 ship canary
 ```
+
+### Step 5: Log to Obsidian vault (optional)
+
+If the project has `[obsidian] auto_log = true` in `.ship.toml`, a per-phiếu markdown log is automatically written to `<vault>/10_Projects/<slug>/logs/` after `ship check` passes. No action needed.
+
+For **manual** logging (one-off, or projects without `auto_log`):
+
+```bash
+# Default: project = cwd dirname, vault = ~/VibeNotes
+ship note
+
+# With explicit metadata
+ship note --project tarot --ticket P042 --message "refactored credit check"
+
+# Override vault
+ship note --vault-path /path/to/other/vault
+```
+
+Use MCP tool `ship_note_export` (same params: `project_slug`, `ticket_id`, `message`, `vault_path`) when triggering from a Claude Code session without shell access.
+
+**Decision tree — when to log:**
+- Phiếu just merged → auto-log fires on next `ship check` (if enabled). No explicit action.
+- Finished a non-phiếu task with learnings worth capturing → `ship note --message "..."` manually.
+- Auto-log disabled but user asks "lưu lại vào vault" → run `ship note` manually.
+- Vault missing / write fail → ship prints warning, exits 0. Never fails the pipeline.
 
 ## Options
 
@@ -120,6 +146,7 @@ blocking = false
 - Before deploy: merge PR, then `ship canary` to verify
 - With docs-gate: automatically validates documentation compliance
 - With learnings (Phase 3): records ship outcomes for cross-project learning
+- With Obsidian vault: `ship check` auto-logs per-phiếu notes when `[obsidian] auto_log = true`; MCP tool `ship_note_export` is available to Claude Code sessions independently of the CLI hook
 
 ## Voice
 

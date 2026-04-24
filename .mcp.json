@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "ship": {
+      "command": "/Users/nguyenhuuanh/.cargo/bin/ship",
+      "args": ["serve"]
+    },
+    "docs-gate": {
+      "command": "/Users/nguyenhuuanh/docs-gate/target/release/docs-gate",
+      "args": ["serve"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/nguyenhuuanh/ship"
+      ]
+    }
+  }
+}
