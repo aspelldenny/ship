@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Drafted (P002 — 2026-04-24, docs)
+- `docs/ticket/P002-obsidian-note.md` — migration phiếu từ `~/VibeNotes/10_Projects/ship/tickets/SHIP-NOTE-OBSIDIAN-INTEGRATION.md` (vault draft) sang format TICKET_TEMPLATE mới. Nội dung: feature `ship note` subcommand — tự log phiếu hoàn thành vào Obsidian vault. 7 tasks, 11 Verification Anchors có grep results thật, 4 open questions chờ Sếp decide. Implementation CHƯA bắt đầu.
+
 ### Changed (P001 — 2026-04-24, chore)
 - `docs/ticket/TICKET_TEMPLATE.md` replaces `TEMPLATE.md` — thêm Verification Anchors table (ép grep trước khi viết assumption), Task structure (File/Tìm/Thay/Lưu ý), Files tables (sửa + verify-only), Regression checklist, Docs Gate section
 - `docs/DISCOVERIES.md` mới — đích đến bắt buộc cho Discovery Report (trước chỉ nói "filed", giờ là file cụ thể)
