@@ -32,6 +32,36 @@ Sếp đọc file này TRƯỚC KHI viết phiếu tiếp theo để cập nhậ
 
 ---
 
+## P004 — 2026-04-24 — Dogfood ship note (CLI install + MCP wiring + SKILL)
+
+### Assumptions trong phiếu — ĐÚNG:
+- Tất cả 7 Verification Anchors khớp. Đáng chú ý:
+  - Binary `~/.cargo/bin/ship` thật sự là Apr 16 — pre-P003. Reinstall cần thiết.
+  - Tarot `.mcp.json` đã register ship MCP; binary reinstall xong → tarot MCP tự lấy bản mới ở session sau (không cần đụng tarot config).
+  - Smoke test end-to-end: `ship check` từ ship repo → emoji "📝 Logged to vault" + file tạo ở `~/VibeNotes/10_Projects/ship/logs/` với content đúng format.
+
+### Assumptions trong phiếu — SAI so với code thật:
+- Không có. Phiếu docs+config only, không phát hiện sai lệch code.
+
+### Edge cases phát hiện thêm:
+- `ship check --skip-tests --skip-docs-gate` vẫn trigger auto-log ở cuối arm — đúng behavior vì hook chỉ check `has_failures()`, không quan tâm bước nào skip. Muốn skip auto-log thì đặt `auto_log = false` hoặc unset `[obsidian]` section.
+- Log hiện tại bắt được commit HEAD (P003 merge commit) vì branch P004 branched off main ngay sau P003, chưa có commit mới. Sau commit P004, log kế tiếp sẽ bắt P004.
+- `.mcp.json` mới cần Claude Code **restart** để load — session hiện tại vẫn dùng old MCP config. Ship vault-log hook (CLI path) hoạt động ngay vì binary đã swap. MCP tool `ship_note_export` sẽ visible ở session Claude Code mới.
+- Filesystem MCP dùng `npx -y @modelcontextprotocol/server-filesystem /Users/nguyenhuuanh/ship` — sẽ cho Claude Code sessions ở ship repo đọc/ghi file trong phạm vi `~/ship`. Intentional — scoped to repo.
+
+### Docs đã cập nhật theo discoveries:
+- `SKILL.md` — thêm Step 5 "Log to Obsidian vault" (CLI + MCP + decision tree), update Prerequisites + Integration.
+- `docs/CHANGELOG.md` — P004 entry.
+- `.mcp.json` + `.ship.toml` mới ở ship root.
+- `CLAUDE.md` section "ship note — Obsidian vault log" từ P003 đã đủ — không cần sửa thêm.
+
+### Follow-up cần phiếu riêng (out of P004 scope):
+- Enable `[obsidian] auto_log = true` trong `~/tarot/.ship.toml`.
+- Tạo `.ship.toml` + enable auto_log cho jarvis, BlockAds, creative-brain-api, docs-gate, guard, media-rating-app, quality-gate, vps.
+- Claude Code session restart required system-wide để MCP servers reload với binary mới.
+
+---
+
 ## P003 — 2026-04-24 — ship note Obsidian integration (implementation)
 
 ### Assumptions trong phiếu — ĐÚNG:

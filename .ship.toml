@@ -1,0 +1,16 @@
+name = "ship"
+stack = "rust"
+base_branch = "main"
+
+[test]
+command = "cargo test"
+timeout_secs = 180
+
+[docs_gate]
+enabled = true
+blocking = false
+
+[obsidian]
+auto_log = true
+# vault_path default ~/VibeNotes
+# project_slug default cwd dirname = "ship"
