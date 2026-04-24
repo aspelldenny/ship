@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Changed (P001 — 2026-04-24, chore)
+- `docs/ticket/TICKET_TEMPLATE.md` replaces `TEMPLATE.md` — thêm Verification Anchors table (ép grep trước khi viết assumption), Task structure (File/Tìm/Thay/Lưu ý), Files tables (sửa + verify-only), Regression checklist, Docs Gate section
+- `docs/DISCOVERIES.md` mới — đích đến bắt buộc cho Discovery Report (trước chỉ nói "filed", giờ là file cụ thể)
+- `CLAUDE.md` — thêm section "Phiếu Workflow — Naming & Counter" (P<NNN> convention, `.phieu-counter`, `phieu` shell fn, flow thủ công), section "Tạo phiếu mid-chat" (4-bước khi Sếp chat-driven), taxonomy 2-trục (Loại vs Risk), Discovery Report mandate với "tại sao"
+- `.gitignore` — ignore `.phieu-counter` (local, per-machine)
+
 ## 0.2.0 (2026-04-04)
 
 ### Added

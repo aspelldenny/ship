@@ -4,3 +4,6 @@
 *.swo
 .DS_Store
 Thumbs.db
+
+# Phiếu ID counter (local, per-machine)
+.phieu-counter

@@ -21,8 +21,10 @@ Builder (thợ) nhận phiếu từ Architect (Sếp), implement trong scope.
 4. No debug code (`dbg!`, `println!` for debug, `todo!`, `unimplemented!`)
 5. Update `docs/CHANGELOG.md`
 6. Update `docs/ARCHITECTURE.md` (Sections 7-9 if implementation changed)
-7. Discovery Report filed
+7. Discovery Report ghi vào `docs/DISCOVERIES.md` (chèn đầu file, sau header — mới nhất lên trên)
 8. Git commit with conventional message
+
+**Thiếu bất kỳ bước nào = phiếu CHƯA XONG. Không báo cáo, không commit.**
 
 ## Hard Stops (DỪNG, hỏi Sếp)
 
@@ -62,27 +64,50 @@ Builder (thợ) nhận phiếu từ Architect (Sếp), implement trong scope.
 
 ## Discovery Report (mandatory per phiếu)
 
-```markdown
-## Discovery Report
-### Assumptions trong phiếu — ĐÚNG:
-- [list correct assumptions]
+**Tại sao luật này tồn tại:** Sếp viết phiếu dựa trên docs + grep, nhưng có thể vẫn sai so với code thật. Nếu thợ phát hiện sai lệch mà không báo lại → Sếp tiếp tục viết phiếu sai → lỗi chồng lỗi.
 
-### Assumptions trong phiếu — SAI:
-- [list mismatches vs code, or "Không có"]
+**Trước khi báo "XONG", thợ PHẢI ghi Discovery Report vào `docs/DISCOVERIES.md`** (chèn đầu file, sau header — mới nhất lên trên, giống CHANGELOG). Format:
+
+```markdown
+## P<NNN> — YYYY-MM-DD — <tiêu đề>
+
+### Assumptions trong phiếu — ĐÚNG:
+- [từng assumption khớp code thật]
+
+### Assumptions trong phiếu — SAI so với code thật:
+- [mismatch X: phiếu ghi "...", thực tế "..." → đã sửa docs Y]
+- [hoặc "Không có"]
 
 ### Edge cases phát hiện thêm:
-- [edge cases found, or "Không có"]
+- [edge cases phiếu không đề cập]
+- [hoặc "Không có"]
 
-### Docs đã cập nhật:
-- [which docs files, what changed]
+### Docs đã cập nhật theo discoveries:
+- [file nào sửa, sửa gì]
 ```
+
+**Luật cứng:**
+- Ghi vào file `docs/DISCOVERIES.md`, KHÔNG chỉ báo cáo trong chat (chat clear sau session).
+- Nếu phiếu có assumption sai Tầng 1 (function signature, struct name, CLI flag) → thợ PHẢI cập nhật docs theo code thật ngay trong phiếu đó.
+- Sếp đọc file này TRƯỚC KHI viết phiếu tiếp theo.
 
 ## Phiếu Classification
 
-| Type | Scope | Review |
+Phiếu có 2 trục độc lập — ghi cả hai trong frontmatter:
+
+**Loại** (kiểu thay đổi — docs-gate check tự động):
+| Loại | Khi nào |
+|------|---------|
+| **Feature** | Thêm capability mới |
+| **Bugfix** | Sửa hành vi sai |
+| **Hotfix** | Bugfix khẩn (P0, skip một số gate) |
+| **Chore** | Refactor, docs, infra, CI, housekeeping |
+
+**Risk** (mức rủi ro — quyết định review):
+| Risk | Scope | Review |
 |------|-------|--------|
 | **read-only** | No side effects (queries, display, docs) | Self-review |
-| **mutating** | Changes data/state (new features, refactor) | Sếp review |
+| **mutating** | Changes data/state, new code paths | Sếp review |
 | **destructive** | Deletes data, breaks API, changes schema | Sếp review + test plan |
 
 ## Language Rules
@@ -91,17 +116,70 @@ Builder (thợ) nhận phiếu từ Architect (Sếp), implement trong scope.
 - English in code, comments, commit messages
 - English in documentation (docs/*.md)
 
-## Git Workflow
+## Phiếu Workflow — Naming & Counter
+
+### Naming
+
+- **ID format:** `P` + 3 chữ số (P001, P042, P123) — zero-padded.
+- **Counter:** `.phieu-counter` ở repo root (local, per-machine; đã gitignored). Source of truth cho số tiếp theo — KHÔNG tự đặt số bằng tay.
+- **Branch:** `<type>/P<NNN>-<slug>` với `<type>` ∈ `{feat, fix, chore, docs, infra}`.
+- **Ticket file:** `docs/ticket/P<NNN>-<slug>.md` (khớp branch, bỏ prefix `<type>/`).
+- **Slug:** kebab-case (chữ thường, số, dấu `-`). Ngắn gọn, mô tả intent.
+- **Commit prefix:** khớp `<type>` của branch (`feat:`, `fix:`, `chore:`, `docs:`, `infra:`).
+
+### Shell function `phieu`
+
+Dùng shell function `phieu` để tạo phiếu mới đúng chuẩn (tự tăng counter, tạo branch, copy template, điền header):
 
 ```bash
-git checkout -b feat/{phieu-id}-{short-name}
-# ... implement ...
-cargo test && cargo clippy -- -D warnings
-git add -A
-git commit -m "feat: brief description"
-git push origin feat/{phieu-id}-{short-name}
-gh pr create --title "feat: ..." --body "..."
+cd ~/ship
+phieu <slug>                  # default type=feat
+phieu <type> <slug>           # type tường minh
+phieu-list                    # list worktrees + next ID
+phieu-done <P-slug>           # xoá worktree khi xong
 ```
+
+> `phieu` mặc định tạo worktree + launch `claude` mới. Khi làm **tuần tự trong cùng cwd** (không parallel), có thể bỏ qua worktree — dùng flow thủ công bên dưới. Khi muốn làm **song song nhiều phiếu**, dùng `phieu` để tạo worktree độc lập.
+
+### Flow thủ công (sequential, không worktree)
+
+```bash
+# 1. Tăng counter + tạo branch từ origin/main
+git fetch origin main --quiet
+n=$(($(cat .phieu-counter) + 1))
+id=$(printf "P%03d" "$n")
+slug=<your-slug>
+type=<feat|fix|chore|docs|infra>
+git checkout -b "$type/$id-$slug" origin/main
+echo "$n" > .phieu-counter
+
+# 2. Copy template + điền header
+cp docs/ticket/TICKET_TEMPLATE.md "docs/ticket/$id-$slug.md"
+# sed header: # PHIẾU $id: $slug
+
+# 3. Viết nội dung phiếu (Context + Verification Anchors + Tasks + Nghiệm thu) TRƯỚC khi code
+
+# 4. Implement → Nghiệm thu → CHANGELOG + DISCOVERIES → commit + push + PR
+git add -A
+git commit -m "$type: brief description (P<NNN>)"
+git push origin "$type/$id-$slug"
+gh pr create --title "$type: ... (P<NNN>)" --body "..."
+```
+
+### Tạo phiếu mid-chat (chat-driven)
+
+Khi Sếp KHÔNG gõ `phieu <slug>` từ đầu mà chat với em để bàn ra phiếu ("em xem cái này có làm được không" → em phân tích → Sếp "ok triển đi") → em PHẢI tự tạo phiếu theo chuẩn, KHÔNG bắt Sếp thoát Claude.
+
+**Trigger:** Sếp xác nhận muốn làm 1 task cụ thể (không còn brainstorm/research).
+
+**4 bước bắt buộc (TRƯỚC khi code dòng nào):**
+
+1. Đọc counter: `cat .phieu-counter` → tăng 1 → format `P<NNN>`
+2. Đề xuất `<type>/P<NNN>-<slug>` → **hỏi Sếp confirm slug + type** (slug em chọn có thể sai intent)
+3. Sau khi Sếp OK, chạy flow thủ công (4 lệnh trên) — tăng counter TRƯỚC khi `checkout -b`. Nếu checkout fail → rollback counter (`echo <old-n> > .phieu-counter`).
+4. Viết Context + Verification Anchors + Tasks + Nghiệm thu vào phiếu TRƯỚC khi code — theo `TICKET_TEMPLATE.md`.
+
+**KHÔNG tạo phiếu khi:** Sếp đang exploration/research/brainstorm — hỏi lại trước.
 
 ## Phase History
 
