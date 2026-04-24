@@ -32,6 +32,39 @@ Sếp đọc file này TRƯỚC KHI viết phiếu tiếp theo để cập nhậ
 
 ---
 
+## P003 — 2026-04-24 — ship note Obsidian integration (implementation)
+
+### Assumptions trong phiếu — ĐÚNG:
+- Tất cả 11 Verification Anchors của P003 khớp thực tế. Code layout đúng như re-verify: CLI dispatch pattern, config pattern, module-per-feature layout, MCP tool macro pattern.
+- `chrono` đã có sẵn → dùng cho `Local::now().format("%Y-%m-%d")`.
+- `tempfile` dev-dep đã có → test ergonomics tốt.
+- Atomic write (`tmp + rename`) đủ mitigate obsidian-git race — không cần trailer marker / config exclude. Smoke test chạy 1 lần OK.
+- Shell function `phieu` không cần touch — P003 dùng flow thủ công (tăng counter, checkout, cp template) vì "làm tuần tự trong cwd" per anh yêu cầu từ đầu session.
+
+### Assumptions trong phiếu — SAI so với code thật:
+- **Dep `dirs` không cần** — `src/learn/mod.rs` đã có `shellexpand` + `dirs_home` pattern zero-dep. P002 pre-approve `dirs = "5"` nhưng recon phát hiện dup pattern đủ. Deviation chốt: không add deps.
+- **Dep `unicode-normalization` không cần** — manual Vietnamese table đủ cho current use case (1 user Vietnamese). ~60 lines vs +crate. Consistent với opt-level="z" size-optimization.
+- **Hook point trong `pipeline/mod.rs` không phù hợp** — sẽ khiến MCP `ship_check` cũng auto-log vì nó call `pipeline::check`. Fix: hook ở `src/main.rs` `Commands::Check` match arm (CLI-level only). MCP user dùng `ship_note_export` explicit.
+- **Rust 2024 edition** (Cargo.toml `edition = "2024"`) — `std::env::set_var` là unsafe. Test ban đầu mắc lỗi; refactor dùng `shellexpand_with_home(path, home: Option<&str>)` inject home thay vì mock env. Sạch hơn, không unsafe, không race giữa tests parallel.
+- **`ObsidianConfig` clippy::derivable_impls** — tất cả fields có Default nên manual impl Default bị flag. Dùng `#[derive(Default)]` thay. Các sub-struct khác trong config.rs manual vì có non-default values (string literals, booleans=true, etc.).
+
+### Edge cases phát hiện thêm:
+- Filename slug rỗng (commit subject all non-ASCII) → fallback string `"note"` trong `write_note()`.
+- Tmp file collision: `atomic_write` dùng `rand_hex4()` cho tmp extension suffix (nanosecond-based) — tránh collision nếu 2 writes đồng thời cùng target.
+- `github_repo_url()` handle cả `git@github.com:user/repo.git` và `https://github.com/user/repo.git`.
+- PR URL lấy qua `gh pr view --json url -q .url` — fail graceful nếu chưa có PR hoặc `gh` không auth.
+- `diff_stat` dùng `HEAD~1..HEAD` — sẽ fail graceful ở fresh repo (no parent commit) → `git_cmd` returns None → section "Files changed" bị bỏ (desired behavior).
+- Smoke test artifact trong vault: `~/VibeNotes/10_Projects/ship/logs/2026-04-24-merge-pull-request-2-from-aspelldenny-do.md` — giữ làm first real entry (obsidian-git sẽ tự commit trong 10p). Acceptable.
+
+### Docs đã cập nhật theo discoveries:
+- `CLAUDE.md` — thêm section "ship note — Obsidian vault log" với integration points (manual/auto/MCP), vault resolution priority, design constraints (graceful, atomic, zero-dep, CLI-level hook). Phase History: thêm Phase 3.5.
+- `README.md` — status table row, commands table row, MCP tools table row, full "Obsidian vault log (`ship note`)" section với usage example.
+- `docs/ARCHITECTURE.md` — Section 1 (module map: `note/`), Section 3 (CLI Interface: `ship note` subcommand + flags), Section 4 (config schema: `[obsidian]`), Section 5 (data structures: `NoteOptions`, `NoteOutcome`), Section 6 (module dependencies: `note/mod.rs → fs + Command`), Section 9 (known constraints: 3 new items #8, #9, #10).
+- `docs/CHANGELOG.md` — P003 entry liệt kê 6 thay đổi chính.
+- `docs/ticket/P003-obsidian-note-impl.md` — phiếu hoàn chỉnh, reference P002 cho full spec.
+
+---
+
 ## P002 — 2026-04-24 — ship note Obsidian integration (phiếu drafted)
 
 > **Lưu ý:** P002 hôm nay mới là DRAFTING phiếu (type=docs, migration từ vault). Implementation CHƯA chạy. Discovery cho phần implementation sẽ append vào entry này khi thợ pickup.

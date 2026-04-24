@@ -34,3 +34,15 @@ pub struct LearnSearchParams {
     /// Search query
     pub query: String,
 }
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct NoteExportParams {
+    /// Project slug (overrides config, else cwd dirname)
+    pub project_slug: Option<String>,
+    /// Ticket ID for the note frontmatter
+    pub ticket_id: Option<String>,
+    /// Free-form learnings line; omitted if absent
+    pub message: Option<String>,
+    /// Vault path (overrides env OBSIDIAN_VAULT_PATH and config)
+    pub vault_path: Option<String>,
+}

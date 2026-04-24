@@ -5,6 +5,7 @@ mod detect;
 mod error;
 mod learn;
 mod mcp;
+mod note;
 mod output;
 mod pipeline;
 
@@ -101,6 +102,21 @@ enum Commands {
         #[command(subcommand)]
         action: LearnAction,
     },
+    /// Export a ship note to the Obsidian vault (per-phiếu log)
+    Note {
+        /// Project slug (overrides config, else cwd dirname)
+        #[arg(long)]
+        project: Option<String>,
+        /// Ticket ID for the note frontmatter
+        #[arg(long)]
+        ticket: Option<String>,
+        /// Free-form learnings line; omitted section if absent
+        #[arg(long)]
+        message: Option<String>,
+        /// Vault path (overrides env OBSIDIAN_VAULT_PATH and config)
+        #[arg(long)]
+        vault_path: Option<String>,
+    },
     /// Start MCP server for Claude integration
     Serve,
 }
@@ -184,11 +200,18 @@ async fn main() {
 
             match pipeline::check(&config, &opts) {
                 Ok(result) => {
-                    if result.has_failures() {
-                        1
-                    } else {
-                        0
+                    let failed = result.has_failures();
+                    if !failed && config.obsidian.auto_log {
+                        match note::run(&config.obsidian, note::NoteOptions::default()) {
+                            note::NoteOutcome::Written(p) => {
+                                eprintln!("📝 Logged to vault: {}", p.display());
+                            }
+                            note::NoteOutcome::Skipped(reason) => {
+                                eprintln!("⚠️  Vault log skipped: {reason}");
+                            }
+                        }
                     }
+                    if failed { 1 } else { 0 }
                 }
                 Err(e) => {
                     eprintln!("❌ Check error: {e}");
@@ -277,6 +300,30 @@ async fn main() {
                 Err(e) => {
                     eprintln!("❌ Deploy error: {e}");
                     1
+                }
+            }
+        }
+
+        Some(Commands::Note {
+            project,
+            ticket,
+            message,
+            vault_path,
+        }) => {
+            let opts = note::NoteOptions {
+                project,
+                ticket,
+                message,
+                vault_path,
+            };
+            match note::run(&config.obsidian, opts) {
+                note::NoteOutcome::Written(p) => {
+                    println!("{}", p.display());
+                    0
+                }
+                note::NoteOutcome::Skipped(reason) => {
+                    eprintln!("⚠️  Vault log skipped: {reason}");
+                    0
                 }
             }
         }

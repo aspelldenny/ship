@@ -13,7 +13,9 @@ use rmcp::service::RoleServer;
 use rmcp::{tool, tool_router};
 
 use crate::config::Config;
-use crate::mcp::tools::{CanaryParams, CheckParams, LearnAddParams, LearnSearchParams};
+use crate::mcp::tools::{
+    CanaryParams, CheckParams, LearnAddParams, LearnSearchParams, NoteExportParams,
+};
 
 #[allow(dead_code)]
 pub struct ShipServer {
@@ -147,6 +149,21 @@ impl ShipServer {
             Err(e) => format!("Error: {e}"),
         }
     }
+
+    /// Export a ship note to the Obsidian vault (per-phiếu log)
+    #[tool(name = "ship_note_export")]
+    fn ship_note_export(&self, Parameters(params): Parameters<NoteExportParams>) -> String {
+        let opts = crate::note::NoteOptions {
+            project: params.project_slug,
+            ticket: params.ticket_id,
+            message: params.message,
+            vault_path: params.vault_path,
+        };
+        match crate::note::run(&self.config.obsidian, opts) {
+            crate::note::NoteOutcome::Written(p) => format!("Written: {}", p.display()),
+            crate::note::NoteOutcome::Skipped(reason) => format!("Skipped: {reason}"),
+        }
+    }
 }
 
 impl rmcp::ServerHandler for ShipServer {
@@ -165,7 +182,8 @@ impl rmcp::ServerHandler for ShipServer {
                  ship_check: run pre-flight checks (test + docs-gate). \
                  ship_canary: health check deployed app. \
                  ship_learn_add: record a project learning. \
-                 ship_learn_search: search learnings by keyword.",
+                 ship_learn_search: search learnings by keyword. \
+                 ship_note_export: write a per-phiếu ship note into the Obsidian vault.",
             )),
             ..Default::default()
         }
@@ -226,14 +244,15 @@ mod tests {
     }
 
     #[test]
-    fn test_tool_router_has_4_tools() {
+    fn test_tool_router_has_5_tools() {
         let server = ShipServer::new(Config::default());
         let tools = server.tool_router.list_all();
-        assert_eq!(tools.len(), 4);
+        assert_eq!(tools.len(), 5);
         let names: Vec<String> = tools.iter().map(|t| t.name.to_string()).collect();
         assert!(names.contains(&"ship_check".to_string()));
         assert!(names.contains(&"ship_canary".to_string()));
         assert!(names.contains(&"ship_learn_add".to_string()));
         assert!(names.contains(&"ship_learn_search".to_string()));
+        assert!(names.contains(&"ship_note_export".to_string()));
     }
 }

@@ -17,6 +17,7 @@ pub struct Config {
     pub canary: CanaryConfig,
     pub deploy: DeployConfig,
     pub learn: LearnConfig,
+    pub obsidian: ObsidianConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -96,6 +97,14 @@ pub struct LearnConfig {
     pub project_dir: String,
 }
 
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+pub struct ObsidianConfig {
+    pub auto_log: bool,
+    pub vault_path: Option<String>,
+    pub project_slug: Option<String>,
+}
+
 // --- Defaults ---
 
 impl Default for Config {
@@ -112,6 +121,7 @@ impl Default for Config {
             canary: CanaryConfig::default(),
             deploy: DeployConfig::default(),
             learn: LearnConfig::default(),
+            obsidian: ObsidianConfig::default(),
         }
     }
 }
