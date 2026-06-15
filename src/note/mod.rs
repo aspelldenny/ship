@@ -511,9 +511,18 @@ mod tests {
         match outcome {
             NoteOutcome::Written(path) => {
                 assert!(path.exists());
+                // Use PathBuf ancestors for cross-platform path check (avoids
+                // forward-vs-backslash mismatch on Windows).
+                let expected_logs_dir = dir
+                    .path()
+                    .join("10_Projects")
+                    .join("testproj")
+                    .join("logs");
                 assert!(
-                    path.to_string_lossy()
-                        .contains("10_Projects/testproj/logs/")
+                    path.starts_with(&expected_logs_dir),
+                    "expected path under {}, got {}",
+                    expected_logs_dir.display(),
+                    path.display()
                 );
                 let body = std::fs::read_to_string(&path).unwrap();
                 assert!(body.contains("project: testproj"));
