@@ -513,11 +513,8 @@ mod tests {
                 assert!(path.exists());
                 // Use PathBuf ancestors for cross-platform path check (avoids
                 // forward-vs-backslash mismatch on Windows).
-                let expected_logs_dir = dir
-                    .path()
-                    .join("10_Projects")
-                    .join("testproj")
-                    .join("logs");
+                let expected_logs_dir =
+                    dir.path().join("10_Projects").join("testproj").join("logs");
                 assert!(
                     path.starts_with(&expected_logs_dir),
                     "expected path under {}, got {}",
